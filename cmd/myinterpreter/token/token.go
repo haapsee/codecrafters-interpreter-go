@@ -72,8 +72,10 @@ func (t *Token) String() string {
 		stringLiteral = "null"
 	} else if t.TokenType == NUMBER {
 		stringLiteral = functions.FormatWithFixedPrecision(t.Literal.(float64))
+	} else {
+		stringLiteral = fmt.Sprintf("%v", t.Literal)
 	}
-	return fmt.Sprintf("%s %s %v", t.TokenType, t.Lexeme, stringLiteral)
+	return fmt.Sprintf("%s %s %s", t.TokenType, t.Lexeme, stringLiteral)
 }
 
 func NewToken(tokentype TokenType, lexeme string, literal interface{}, line int) Token {

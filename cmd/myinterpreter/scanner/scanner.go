@@ -199,7 +199,10 @@ func (s *Scanner) scanToken() error {
 			s.addToken(token.SLASH, nil)
 		}
 	case '"':
-		s.parseString()
+		err := s.parseString()
+		if err != nil {
+			return err
+		}
 	case ' ':
 	case '\t':
 	case '\r':
