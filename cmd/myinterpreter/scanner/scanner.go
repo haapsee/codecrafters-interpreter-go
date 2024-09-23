@@ -192,7 +192,8 @@ func (s *Scanner) scanToken() error {
 		s.addToken(tokentype, nil)
 	case '/':
 		if s.match('/') {
-			for ; s.peek() != '\n' && !s.isAtEnd(); s.advance() {
+			for !s.isAtEnd() && s.peek() != '\n' {
+				s.advance()
 			}
 		} else {
 			s.addToken(token.SLASH, nil)
