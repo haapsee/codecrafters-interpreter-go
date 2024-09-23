@@ -19,7 +19,7 @@ type Scanner struct {
 }
 
 func (s *Scanner) isAtEnd() bool {
-	return s.CurrentIndex >= len(s.Source)
+	return s.CurrentIndex >= len([]rune(s.Source))
 }
 
 func (s *Scanner) getCurrentSubString() string {
