@@ -217,16 +217,17 @@ func (s *Scanner) scanToken() error {
 	return nil
 }
 
-func (s *Scanner) ScanTokens() error {
+func (s *Scanner) ScanTokens() []error {
+	var retErr []error
 	for !s.isAtEnd() {
 		s.StartIndex = s.CurrentIndex
 		err := s.scanToken()
 		if err != nil {
-			return err
+			retErr = append(retErr, err)
 		}
 	}
 	s.Tokens = append(s.Tokens, token.NewToken(token.EOF, "", nil, s.Line))
-	return nil
+	return retErr
 }
 
 func NewScanner(source string) Scanner {

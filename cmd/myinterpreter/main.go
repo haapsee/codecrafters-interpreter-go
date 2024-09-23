@@ -31,17 +31,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	s, err := scantokens(fileContents)
+	s, errs := scantokens(fileContents)
 	for _, t := range s.Tokens {
 		fmt.Println(t.String())
 	}
-	if err != nil {
-		printErrorAndExit(err)
+	if errs != nil && len(errs) > 0 {
+		printErrorsAndExit(errs, 65)
 	}
 }
 
+func printErrorsAndExit(errs []error, code int) {
+	for _, e := range errs {
+		fmt.Fprintln(os.Stderr, e.Error())
+	}
+	os.Exit(code)
+}
+
 func printErrorAndExit(err error) {
-	fmt.Fprintln(os.Stderr, err.Error())
 	switch err.(type) {
 	case errors.LexicalError:
 		os.Exit(65)
@@ -50,7 +56,7 @@ func printErrorAndExit(err error) {
 	}
 }
 
-func scantokens(filecontents []byte) (scanner.Scanner, error) {
+func scantokens(filecontents []byte) (scanner.Scanner, []error) {
 	s := scanner.NewScanner(string(filecontents))
 	err := s.ScanTokens()
 	if err != nil {
