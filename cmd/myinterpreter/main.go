@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/errors"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/scanner"
 )
 
 func main() {
@@ -28,9 +31,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(fileContents) > 0 {
-		panic("Scanner not implemented")
-	} else {
-		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner
+	s, err := scantokens(fileContents)
+	for _, t := range s.Tokens {
+		fmt.Println(t.String())
 	}
+	if err != nil {
+		printErrorAndExit(err)
+	}
+}
+
+func printErrorAndExit(err error) {
+	fmt.Fprintln(os.Stderr, err.Error())
+	switch err.(type) {
+	case errors.LexicalError:
+		os.Exit(65)
+	default:
+		os.Exit(1)
+	}
+}
+
+func scantokens(filecontents []byte) (scanner.Scanner, error) {
+	s := scanner.NewScanner(string(filecontents))
+	err := s.ScanTokens()
+	if err != nil {
+		return s, err
+	}
+	return s, nil
 }
