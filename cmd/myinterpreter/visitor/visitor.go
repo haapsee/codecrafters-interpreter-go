@@ -49,7 +49,7 @@ func (interpreter *Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{},
 	case token.BANG:
 		return functions.IsTruthy(right), nil
 	case token.MINUS:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
@@ -67,37 +67,37 @@ func (interpreter *Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{},
 		}
 		return nil, errors.NewRuntimeError(binary.Operator, "Operands must be two numbers or two strings.")
 	case token.SLASH:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
 		return left.(float64) / right.(float64), nil
 	case token.STAR:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
 		return left.(float64) * right.(float64), nil
 	case token.GREATER:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
 		return left.(float64) > right.(float64), nil
 	case token.GREATER_EQUAL:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
 		return left.(float64) >= right.(float64), nil
 	case token.LESS:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}
 		return left.(float64) < right.(float64), nil
 	case token.LESS_EQUAL:
-		err := checkNumberOperand(binary.Operator, right)
+		err := checkNumberOperand(binary.Operator, right, left)
 		if err != nil {
 			return nil, err
 		}

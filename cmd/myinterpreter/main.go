@@ -54,7 +54,6 @@ func main() {
 		}
 		fmt.Println(result)
 	} else if command == "evaluate" {
-
 		if len(errs) > 0 {
 			printErrorsAndExit(errs, 65)
 		}
