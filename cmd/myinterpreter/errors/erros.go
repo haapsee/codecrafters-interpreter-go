@@ -2,6 +2,20 @@ package errors
 
 import "fmt"
 
+type Error struct {
+	message string
+}
+
+func (e Error) Error() string {
+	return e.message
+}
+
+func New(message string) Error {
+	return Error{
+		message: message,
+	}
+}
+
 type LexicalError struct {
 	Message string
 	Line    int

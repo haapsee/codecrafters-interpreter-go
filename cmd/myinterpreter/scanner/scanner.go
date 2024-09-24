@@ -11,7 +11,6 @@ import (
 
 type Scanner struct {
 	CurrentIndex int
-	HadError     bool
 	Line         int
 	Source       string
 	StartIndex   int
@@ -237,7 +236,6 @@ func (s *Scanner) ScanTokens() []error {
 func NewScanner(source string) Scanner {
 	return Scanner{
 		Source:       source,
-		HadError:     false,
 		Line:         1,
 		StartIndex:   0,
 		CurrentIndex: 0,

@@ -5,7 +5,10 @@ import (
 	"os"
 
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/errors"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/interfaces"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/parser"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/scanner"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/visitor"
 )
 
 func main() {
@@ -18,12 +21,6 @@ func main() {
 	}
 
 	command := os.Args[1]
-
-	if command != "tokenize" {
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
-		os.Exit(1)
-	}
-
 	filename := os.Args[2]
 	fileContents, err := os.ReadFile(filename)
 	if err != nil {
@@ -32,11 +29,32 @@ func main() {
 	}
 
 	s, errs := scantokens(fileContents)
-	for _, t := range s.Tokens {
-		fmt.Println(t.String())
-	}
-	if errs != nil && len(errs) > 0 {
-		printErrorsAndExit(errs, 65)
+	if command == "tokenize" {
+		for _, t := range s.Tokens {
+			fmt.Println(t.String())
+		}
+
+		if len(errs) > 0 {
+			printErrorsAndExit(errs, 65)
+		}
+	} else if command == "parse" {
+		if len(errs) > 0 {
+			printErrorsAndExit(errs, 65)
+		}
+
+		expression, err := parsetokens(s)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+
+		printer := visitor.NewAstPrinter()
+		result, err := printer.Print(expression)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+		fmt.Println(result)
+	} else {
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 	}
 }
 
@@ -54,6 +72,12 @@ func printErrorAndExit(err error) {
 	default:
 		os.Exit(1)
 	}
+}
+
+func parsetokens(s scanner.Scanner) (interfaces.Expr, error) {
+	p := parser.New(s.Tokens)
+	expression, err := p.Parse()
+	return expression, err
 }
 
 func scantokens(filecontents []byte) (scanner.Scanner, []error) {
