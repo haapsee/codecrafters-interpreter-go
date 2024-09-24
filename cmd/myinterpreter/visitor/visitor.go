@@ -23,7 +23,7 @@ func (printer *AstPrinter) parenthesize(name string, expressions ...interfaces.E
 		str = fmt.Sprintf("%s %v", str, result)
 	}
 
-	return str, nil
+	return str + ")", nil
 }
 
 func (printer *AstPrinter) VisitBinaryExpr(b interfaces.Expr) (interface{}, error) {
