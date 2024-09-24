@@ -53,6 +53,22 @@ func main() {
 			printErrorAndExit(err)
 		}
 		fmt.Println(result)
+	} else if command == "evaluate" {
+
+		if len(errs) > 0 {
+			printErrorsAndExit(errs, 65)
+		}
+
+		expression, err := parsetokens(s)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+
+		interpreter := visitor.NewInterpreter()
+		err = interpreter.Interpret(expression)
+		if err != nil {
+			printErrorAndExit(err)
+		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 	}
@@ -66,9 +82,12 @@ func printErrorsAndExit(errs []error, code int) {
 }
 
 func printErrorAndExit(err error) {
+	fmt.Fprintln(os.Stderr, err.Error())
 	switch err.(type) {
 	case errors.LexicalError:
 		os.Exit(65)
+	case errors.RuntimeError:
+		os.Exit(70)
 	default:
 		os.Exit(1)
 	}

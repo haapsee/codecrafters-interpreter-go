@@ -34,6 +34,16 @@ func IsDigit(char rune) bool {
 	return strings.Contains("1234567890", string(char))
 }
 
+func IsTruthy(val interface{}) bool {
+	if val == nil {
+		return false
+	}
+	if TypeOf(val) == "bool" {
+		return val.(bool)
+	}
+	return true
+}
+
 func FormatWithFixedPrecision(num float64) string {
 	value := fmt.Sprintf("%g", num)
 

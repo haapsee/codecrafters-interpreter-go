@@ -1,6 +1,10 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
+)
 
 type Error struct {
 	message string
@@ -13,6 +17,22 @@ func (e Error) Error() string {
 func New(message string) Error {
 	return Error{
 		message: message,
+	}
+}
+
+type RuntimeError struct {
+	Token   token.Token
+	Message string
+}
+
+func (err RuntimeError) Error() string {
+	return fmt.Sprintf("%s\n[line %d]", err.Message, err.Token.Line)
+}
+
+func NewRuntimeError(token token.Token, message string) RuntimeError {
+	return RuntimeError{
+		Message: message,
+		Token:   token,
 	}
 }
 
