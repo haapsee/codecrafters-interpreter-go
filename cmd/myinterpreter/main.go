@@ -112,12 +112,12 @@ func evaluate(fileContents []byte) {
 }
 
 func run(fileContents []byte) {
-	statement, err := parseStatement(tokenize(fileContents, true))
+	statements, err := parseStatement(tokenize(fileContents, true))
 	if err != nil {
 		printErrorAndExit(err)
 	}
 	interpreter := visitor.NewInterpreter()
-	err = interpreter.Interpret(statement)
+	err = interpreter.Interpret(statements)
 	if err != nil {
 		printErrorAndExit(err)
 	}

@@ -22,7 +22,7 @@ func (s *Scanner) isAtEnd() bool {
 }
 
 func (s *Scanner) getCurrentSubString() string {
-	return s.Source[s.StartIndex:s.CurrentIndex]
+	return string(([]rune(s.Source))[s.StartIndex:s.CurrentIndex])
 }
 
 func (s *Scanner) addToken(tokentype token.TokenType, literal interface{}) {
