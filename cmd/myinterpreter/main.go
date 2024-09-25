@@ -8,6 +8,7 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/interfaces"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/parser"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/scanner"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/visitor"
 )
 
@@ -28,46 +29,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	s, errs := scantokens(fileContents)
 	if command == "tokenize" {
-		for _, t := range s.Tokens {
-			fmt.Println(t.String())
-		}
-
-		if len(errs) > 0 {
-			printErrorsAndExit(errs, 65)
-		}
+		tokenize(fileContents, false)
 	} else if command == "parse" {
-		if len(errs) > 0 {
-			printErrorsAndExit(errs, 65)
-		}
-
-		expression, err := parsetokens(s)
-		if err != nil {
-			printErrorAndExit(err)
-		}
-
-		printer := visitor.NewAstPrinter()
-		result, err := printer.Print(expression)
-		if err != nil {
-			printErrorAndExit(err)
-		}
-		fmt.Println(result)
+		parse(fileContents, false)
 	} else if command == "evaluate" {
-		if len(errs) > 0 {
-			printErrorsAndExit(errs, 65)
-		}
-
-		expression, err := parsetokens(s)
-		if err != nil {
-			printErrorAndExit(err)
-		}
-
-		interpreter := visitor.NewInterpreter()
-		err = interpreter.Interpret(expression)
-		if err != nil {
-			printErrorAndExit(err)
-		}
+		evaluate(fileContents)
+	} else if command == "run" {
+		run(fileContents)
 	} else {
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 	}
@@ -85,6 +54,8 @@ func printErrorAndExit(err error) {
 	switch err.(type) {
 	case errors.LexicalError:
 		os.Exit(65)
+	case errors.ParseError:
+		os.Exit(70)
 	case errors.RuntimeError:
 		os.Exit(70)
 	default:
@@ -92,10 +63,74 @@ func printErrorAndExit(err error) {
 	}
 }
 
-func parsetokens(s scanner.Scanner) (interfaces.Expr, error) {
-	p := parser.New(s.Tokens)
-	expression, err := p.Parse()
-	return expression, err
+func tokenize(fileContents []byte, noPrint bool) []token.Token {
+	s, errs := scantokens(fileContents)
+
+	if !noPrint {
+		for _, t := range s.Tokens {
+			fmt.Println(t.String())
+		}
+	}
+
+	if len(errs) > 0 {
+		printErrorsAndExit(errs, 65)
+	}
+
+	return s.Tokens
+}
+
+func parse(fileContents []byte, noprint bool) interfaces.Expr {
+	tokens := tokenize(fileContents, true)
+
+	expression, err := parseExpression(tokens)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+
+	if noprint {
+		return expression
+	}
+
+	printer := visitor.NewAstPrinter()
+	result, err := printer.Print(expression)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	fmt.Println(result)
+
+	return expression
+}
+
+func evaluate(fileContents []byte) {
+	expression := parse(fileContents, true)
+	interpreter := visitor.NewInterpreter()
+	value, err := expression.Accept(interpreter)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	fmt.Println(interpreter.Stringify(value))
+}
+
+func run(fileContents []byte) {
+	statement, err := parseStatement(tokenize(fileContents, true))
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	interpreter := visitor.NewInterpreter()
+	err = interpreter.Interpret(statement)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+}
+
+func parseExpression(t []token.Token) (interfaces.Expr, error) {
+	p := parser.New(t)
+	return p.Expression()
+}
+
+func parseStatement(t []token.Token) ([]interfaces.Statement, error) {
+	p := parser.New(t)
+	return p.Parse()
 }
 
 func scantokens(filecontents []byte) (scanner.Scanner, []error) {

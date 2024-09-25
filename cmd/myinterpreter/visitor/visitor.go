@@ -8,6 +8,7 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/expr"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/functions"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/interfaces"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/statements"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 )
 
@@ -33,7 +34,7 @@ func (interpreter *Interpreter) evaluate(expression interfaces.Expr) (interface{
 	return expression.Accept(interpreter)
 }
 
-func (interpreter *Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{}, error) {
+func (interpreter Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{}, error) {
 	binary := b.(expr.BinaryExpr)
 	left, err := interpreter.evaluate(binary.Left)
 	if err != nil {
@@ -103,6 +104,7 @@ func (interpreter *Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{},
 		}
 		return left.(float64) <= right.(float64), nil
 	case token.BANG_EQUAL:
+		// fmt.Println("!=", left != right)
 		return left != right, nil
 	case token.EQUAL_EQUAL:
 		return left == right, nil
@@ -111,20 +113,17 @@ func (interpreter *Interpreter) VisitBinaryExpr(b interfaces.Expr) (interface{},
 	return nil, nil
 }
 
-// VisitGroupingExpr implements interfaces.Visitor.
-func (interpreter *Interpreter) VisitGroupingExpr(g interfaces.Expr) (interface{}, error) {
+func (interpreter Interpreter) VisitGroupingExpr(g interfaces.Expr) (interface{}, error) {
 	grouping := g.(expr.GroupingExpr)
 	return interpreter.evaluate(grouping.Expression)
 }
 
-// VisitLiteralExpr implements interfaces.Visitor.
-func (interpreter *Interpreter) VisitLiteralExpr(l interfaces.Expr) (interface{}, error) {
+func (interpreter Interpreter) VisitLiteralExpr(l interfaces.Expr) (interface{}, error) {
 	literal := l.(expr.LiteralExpr)
 	return literal.Literal, nil
 }
 
-// VisitUnaryExpr implements interfaces.Visitor.
-func (interpreter *Interpreter) VisitUnaryExpr(u interfaces.Expr) (interface{}, error) {
+func (interpreter Interpreter) VisitUnaryExpr(u interfaces.Expr) (interface{}, error) {
 	unary := u.(expr.UnaryExpr)
 	right, err := interpreter.evaluate(unary.Right)
 	if err != nil {
@@ -145,6 +144,21 @@ func (interpreter *Interpreter) VisitUnaryExpr(u interfaces.Expr) (interface{}, 
 	return nil, nil
 }
 
+func (interpreter Interpreter) VisitPrintStatement(printStmt interfaces.Statement) (interface{}, error) {
+	printStatement := printStmt.(statements.PrintStatement)
+	value, err := interpreter.evaluate(printStatement.Expression)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(interpreter.Stringify(value))
+	return value, nil
+}
+
+func (interpreter Interpreter) VisitExpressionStatement(exprStmt interfaces.Statement) (interface{}, error) {
+	expressionStatement := exprStmt.(statements.ExpressionStatement)
+	return interpreter.evaluate(expressionStatement.Expression)
+}
+
 func (interpreter *Interpreter) Stringify(obj interface{}) string {
 	if obj == nil {
 		return "nil"
@@ -162,7 +176,12 @@ func (interpreter *Interpreter) Stringify(obj interface{}) string {
 	return fmt.Sprintf("%v", obj)
 }
 
-func (interpreter *Interpreter) Interpret(expression interfaces.Expr) error {
+func (interpreter *Interpreter) execute(statement interfaces.Statement) error {
+	_, err := statement.Accept(interpreter)
+	return err
+}
+
+func (interpreter *Interpreter) InterpretOld(expression interfaces.Expr) error {
 	value, err := interpreter.evaluate(expression)
 	if err != nil {
 		return err
@@ -170,6 +189,25 @@ func (interpreter *Interpreter) Interpret(expression interfaces.Expr) error {
 	fmt.Println(interpreter.Stringify(value))
 	return nil
 }
+
+func (interpreter *Interpreter) Interpret(statements []interfaces.Statement) error {
+	for _, statement := range statements {
+		err := interpreter.execute(statement)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// func (interpreter *Interpreter) Interpret(expression interfaces.Expr) error {
+// 	value, err := interpreter.evaluate(expression)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	fmt.Println(interpreter.Stringify(value))
+// 	return nil
+// }
 
 func NewInterpreter() Interpreter {
 	return Interpreter{}
@@ -183,6 +221,16 @@ func NewInterpreter() Interpreter {
  ****************
  ****************/
 type AstPrinter struct {
+}
+
+func (printer *AstPrinter) VisitExpressionStatement(exprStmt interfaces.Statement) (interface{}, error) {
+	expressionStatement := exprStmt.(statements.ExpressionStatement)
+	return printer.parenthesize(";", expressionStatement.Expression)
+}
+
+func (printer *AstPrinter) VisitPrintStatement(printStmt interfaces.Statement) (interface{}, error) {
+	printStatement := printStmt.(statements.PrintStatement)
+	return printer.parenthesize("print", printStatement.Expression)
 }
 
 func (printer *AstPrinter) parenthesize(name string, expressions ...interfaces.Expr) (string, error) {
@@ -247,12 +295,23 @@ func (printer *AstPrinter) VisitUnaryExpr(u interfaces.Expr) (interface{}, error
 	return result, nil
 }
 
-func (printer *AstPrinter) Print(expression interfaces.Expr) (string, error) {
-	result, err := expression.Accept(printer)
-	if err != nil {
-		return "", err
+func (printer *AstPrinter) Print(obj interface{}) (string, error) {
+	switch obj := obj.(type) {
+	case interfaces.Expr:
+		result, err := obj.Accept(printer)
+		if err != nil {
+			return "", err
+		}
+		return result.(string), nil
+	case interfaces.Statement:
+		result, err := obj.Accept(printer)
+		if err != nil {
+			return "", err
+		}
+		return result.(string), nil
+	default:
+		return "", errors.NewRuntimeError(token.NewTokenNil(), fmt.Sprintf("%v", obj))
 	}
-	return result.(string), nil
 }
 
 func NewAstPrinter() AstPrinter {

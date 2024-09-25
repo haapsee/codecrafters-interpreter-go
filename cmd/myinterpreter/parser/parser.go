@@ -4,6 +4,7 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/errors"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/expr"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/interfaces"
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/statements"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 )
 
@@ -21,7 +22,7 @@ func (p *Parser) error(t token.Token, message string) error {
 }
 
 func (p *Parser) isAtEnd() bool {
-	return p.Current >= len(p.Tokens)
+	return p.Current >= len(p.Tokens) || p.peek().TokenType == token.EOF
 }
 
 func (p *Parser) previous() token.Token {
@@ -57,7 +58,7 @@ func (p *Parser) consume(tokentype token.TokenType, message string) (token.Token
 	if p.check(tokentype) {
 		return p.advance(), nil
 	}
-	return token.NewTokenNil(), errors.New(message)
+	return token.NewTokenNil(), errors.NewParseError(p.peek(), message)
 }
 
 func (p *Parser) primary() (interfaces.Expr, error) {
@@ -70,7 +71,7 @@ func (p *Parser) primary() (interfaces.Expr, error) {
 	} else if p.match(token.NUMBER, token.STRING) {
 		return expr.NewLiteral(p.previous().Literal), nil
 	} else if p.match(token.LEFT_PAREN) {
-		expression, err := p.expression()
+		expression, err := p.Expression()
 		if err != nil {
 			return nil, err
 		}
@@ -151,7 +152,11 @@ func (p *Parser) comparsion() (interfaces.Expr, error) {
 	return expression, nil
 }
 
-func (p *Parser) expression() (interfaces.Expr, error) {
+func (p *Parser) Expression() (interfaces.Expr, error) {
+	return p.equality()
+}
+
+func (p *Parser) equality() (interfaces.Expr, error) {
 	expression, err := p.comparsion()
 	if err != nil {
 		return nil, err
@@ -169,9 +174,54 @@ func (p *Parser) expression() (interfaces.Expr, error) {
 	return expression, nil
 }
 
-func (p *Parser) Parse() (interfaces.Expr, error) {
-	return p.expression()
+func (p *Parser) expressionStatement() (interfaces.Statement, error) {
+	expression, err := p.Expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.")
+	if err != nil {
+		return nil, err
+	}
+	return statements.NewExpressionStatement(expression), nil
 }
+
+func (p *Parser) printStatement() (interfaces.Statement, error) {
+	value, err := p.Expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.")
+	if err != nil {
+		return nil, err
+	}
+	return statements.NewPrintStatement(value), nil
+}
+
+func (p *Parser) statement() (interfaces.Statement, error) {
+	if p.match(token.PRINT) {
+		return p.printStatement()
+	}
+
+	return p.expressionStatement()
+}
+
+func (p *Parser) Parse() ([]interfaces.Statement, error) {
+	var statements []interfaces.Statement
+
+	for !p.isAtEnd() {
+		statement, err := p.statement()
+		if err != nil {
+			return statements, err
+		}
+		statements = append(statements, statement)
+	}
+	return statements, nil
+}
+
+// func (p *Parser) Parse() (interfaces.Expr, error) {
+// 	return p.expression()
+// }
 
 func New(tokens []token.Token) Parser {
 	return Parser{

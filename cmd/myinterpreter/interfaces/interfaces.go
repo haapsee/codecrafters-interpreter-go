@@ -10,3 +10,13 @@ type Visitor interface {
 	VisitLiteralExpr(l Expr) (interface{}, error)
 	VisitUnaryExpr(u Expr) (interface{}, error)
 }
+
+type Statement interface {
+	Accept(v StatementVisitor) (interface{}, error)
+	GetExpression() (Expr, error)
+}
+
+type StatementVisitor interface {
+	VisitExpressionStatement(exprStmt Statement) (interface{}, error)
+	VisitPrintStatement(printStmt Statement) (interface{}, error)
+}
