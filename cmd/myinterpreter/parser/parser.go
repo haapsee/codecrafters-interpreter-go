@@ -54,11 +54,11 @@ func (p *Parser) match(tokentypes ...token.TokenType) bool {
 	return false
 }
 
-func (p *Parser) consume(tokentype token.TokenType, message string) (token.Token, error) {
+func (p *Parser) consume(tokentype token.TokenType, message string, code int) (token.Token, error) {
 	if p.check(tokentype) {
 		return p.advance(), nil
 	}
-	return token.NewTokenNil(), errors.NewParseError(p.peek(), message)
+	return token.NewTokenNil(), errors.NewParseError(p.peek(), message, code)
 }
 
 func (p *Parser) primary() (interfaces.Expr, error) {
@@ -70,12 +70,14 @@ func (p *Parser) primary() (interfaces.Expr, error) {
 		return expr.NewLiteral(nil), nil
 	} else if p.match(token.NUMBER, token.STRING) {
 		return expr.NewLiteral(p.previous().Literal), nil
+	} else if p.match(token.IDENTIFIER) {
+		return expr.NewVarExpr(p.previous()), nil
 	} else if p.match(token.LEFT_PAREN) {
 		expression, err := p.Expression()
 		if err != nil {
 			return nil, err
 		}
-		_, err = p.consume(token.RIGHT_PAREN, "Expect ')' after expression.")
+		_, err = p.consume(token.RIGHT_PAREN, "Expect ')' after expression.", 65)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +181,7 @@ func (p *Parser) expressionStatement() (interfaces.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.")
+	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.", 70)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +193,7 @@ func (p *Parser) printStatement() (interfaces.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.")
+	_, err = p.consume(token.SEMICOLON, "Expect ';' after value.", 70)
 	if err != nil {
 		return nil, err
 	}
@@ -206,11 +208,40 @@ func (p *Parser) statement() (interfaces.Statement, error) {
 	return p.expressionStatement()
 }
 
+func (p *Parser) varDeclaration() (interfaces.Statement, error) {
+	name, err := p.consume(token.IDENTIFIER, "Expect variable name.", 70)
+	if err != nil {
+		return nil, err
+	}
+	var initializer interfaces.Expr
+	if p.match(token.EQUAL) {
+		initializer, err = p.Expression()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.consume(token.SEMICOLON, "Expect ';' after variable declaration.", 70)
+	if err != nil {
+		return nil, err
+	}
+
+	return statements.NewVarStatement(name, initializer), nil
+}
+
+func (p *Parser) decalration() (interfaces.Statement, error) {
+	if p.match(token.VAR) {
+		return p.varDeclaration()
+	}
+
+	return p.statement()
+}
+
 func (p *Parser) Parse() ([]interfaces.Statement, error) {
 	var statements []interfaces.Statement
 
 	for !p.isAtEnd() {
-		statement, err := p.statement()
+		statement, err := p.decalration()
 		if err != nil {
 			return statements, err
 		}
@@ -218,10 +249,6 @@ func (p *Parser) Parse() ([]interfaces.Statement, error) {
 	}
 	return statements, nil
 }
-
-// func (p *Parser) Parse() (interfaces.Expr, error) {
-// 	return p.expression()
-// }
 
 func New(tokens []token.Token) Parser {
 	return Parser{

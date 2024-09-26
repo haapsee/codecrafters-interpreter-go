@@ -51,11 +51,11 @@ func printErrorsAndExit(errs []error, code int) {
 
 func printErrorAndExit(err error) {
 	fmt.Fprintln(os.Stderr, err.Error())
-	switch err.(type) {
+	switch err := err.(type) {
 	case errors.LexicalError:
 		os.Exit(65)
 	case errors.ParseError:
-		os.Exit(70)
+		os.Exit(err.Code)
 	case errors.RuntimeError:
 		os.Exit(70)
 	default:

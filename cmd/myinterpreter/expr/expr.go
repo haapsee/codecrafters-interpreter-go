@@ -5,6 +5,20 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 )
 
+type VarExpr struct {
+	Token token.Token
+}
+
+func (ve VarExpr) Accept(v interfaces.Visitor) (interface{}, error) {
+	return v.VisitVarExpr(ve)
+}
+
+func NewVarExpr(t token.Token) VarExpr {
+	return VarExpr{
+		Token: t,
+	}
+}
+
 type GroupingExpr struct {
 	Expression interfaces.Expr
 }

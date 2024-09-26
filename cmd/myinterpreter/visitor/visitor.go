@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/environment"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/errors"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/expr"
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/functions"
@@ -19,7 +20,32 @@ import (
  *             	*
  ****************
  ****************/
-type Interpreter struct{}
+type Interpreter struct {
+	environment environment.Environment
+}
+
+func (interpreter Interpreter) VisitVarExpr(v interfaces.Expr) (interface{}, error) {
+	varExpression := v.(expr.VarExpr)
+	return interpreter.environment.Get(varExpression.Token)
+}
+
+func (interpreter Interpreter) VisitVarStatement(varStmt interfaces.Statement) (interface{}, error) {
+	var value interface{}
+	var err error
+
+	varStatement := varStmt.(statements.VarStatement)
+	expression := varStatement.Expression
+
+	if expression != nil {
+		value, err = interpreter.evaluate(expression)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	interpreter.environment.Define(varStatement.Name.Lexeme, value)
+	return nil, nil
+}
 
 func checkNumberOperand(t token.Token, operands ...interface{}) error {
 	for _, operand := range operands {
@@ -210,7 +236,9 @@ func (interpreter *Interpreter) Interpret(statements []interfaces.Statement) err
 // }
 
 func NewInterpreter() Interpreter {
-	return Interpreter{}
+	return Interpreter{
+		environment: environment.NewEnvironment(),
+	}
 }
 
 /****************
@@ -221,6 +249,16 @@ func NewInterpreter() Interpreter {
  ****************
  ****************/
 type AstPrinter struct {
+}
+
+// VisitVarStatement implements interfaces.StatementVisitor.
+func (printer *AstPrinter) VisitVarStatement(varStmt interfaces.Statement) (interface{}, error) {
+	panic("unimplemented")
+}
+
+// VisitVarExpr implements interfaces.Visitor.
+func (printer *AstPrinter) VisitVarExpr(v interfaces.Expr) (interface{}, error) {
+	panic("unimplemented")
 }
 
 func (printer *AstPrinter) VisitExpressionStatement(exprStmt interfaces.Statement) (interface{}, error) {

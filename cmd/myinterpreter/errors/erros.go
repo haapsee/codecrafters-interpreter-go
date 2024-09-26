@@ -57,15 +57,17 @@ func NewLexicalError(line int, where string, message string) error {
 type ParseError struct {
 	Message string
 	Token   token.Token
+	Code    int
 }
 
 func (pe ParseError) Error() string {
 	return fmt.Sprintf("[line %d] Error: %s", pe.Token.Line, pe.Message)
 }
 
-func NewParseError(t token.Token, message string) error {
+func NewParseError(t token.Token, message string, code int) error {
 	return ParseError{
 		Message: message,
 		Token:   t,
+		Code:    code,
 	}
 }

@@ -9,6 +9,7 @@ type Visitor interface {
 	VisitGroupingExpr(g Expr) (interface{}, error)
 	VisitLiteralExpr(l Expr) (interface{}, error)
 	VisitUnaryExpr(u Expr) (interface{}, error)
+	VisitVarExpr(v Expr) (interface{}, error)
 }
 
 type Statement interface {
@@ -19,4 +20,5 @@ type Statement interface {
 type StatementVisitor interface {
 	VisitExpressionStatement(exprStmt Statement) (interface{}, error)
 	VisitPrintStatement(printStmt Statement) (interface{}, error)
+	VisitVarStatement(varStmt Statement) (interface{}, error)
 }
