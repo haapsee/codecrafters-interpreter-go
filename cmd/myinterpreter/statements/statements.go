@@ -5,6 +5,25 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 )
 
+type BlockStatement struct {
+	Statements []interfaces.Statement
+}
+
+// GetExpression implements interfaces.Statement.
+func (bs BlockStatement) GetExpression() (interfaces.Expr, error) {
+	panic("unimplemented")
+}
+
+func (bs BlockStatement) Accept(visitor interfaces.StatementVisitor) (interface{}, error) {
+	return visitor.VisitBlockStatement(bs)
+}
+
+func NewBlockStatement(statements []interfaces.Statement) BlockStatement {
+	return BlockStatement{
+		Statements: statements,
+	}
+}
+
 type VarStatement struct {
 	Name       token.Token
 	Expression interfaces.Expr

@@ -24,6 +24,29 @@ type Interpreter struct {
 	environment environment.Environment
 }
 
+func (interpreter *Interpreter) executeBlock(statements []interfaces.Statement, env environment.Environment) error {
+	prevEnv := interpreter.environment
+	interpreter.environment = env
+	var err error
+
+	for _, statement := range statements {
+		err = interpreter.execute(statement)
+		if err != nil {
+			return err
+		}
+	}
+
+	interpreter.environment = prevEnv
+	return nil
+}
+
+// VisitBlockStatement implements interfaces.StatementVisitor.
+func (interpreter *Interpreter) VisitBlockStatement(blockStmt interfaces.Statement) (interface{}, error) {
+	blockStatement := blockStmt.(statements.BlockStatement)
+	err := interpreter.executeBlock(blockStatement.Statements, environment.NewEnvironment(interpreter.environment))
+	return nil, err
+}
+
 func (interpreter Interpreter) VisitAssignExpr(ae interfaces.Expr) (interface{}, error) {
 	// fmt.Println(ae)
 	assignExpr := ae.(expr.AssignExpr)
@@ -261,7 +284,7 @@ func (interpreter *Interpreter) Interpret(statements []interfaces.Statement) err
 
 func NewInterpreter() Interpreter {
 	return Interpreter{
-		environment: environment.NewEnvironment(),
+		environment: environment.NewEnvironment(nil),
 	}
 }
 
@@ -273,6 +296,11 @@ func NewInterpreter() Interpreter {
  ****************
  ****************/
 type AstPrinter struct {
+}
+
+// VisitBlockStatement implements interfaces.StatementVisitor.
+func (printer *AstPrinter) VisitBlockStatement(blockStmt interfaces.Statement) (interface{}, error) {
+	panic("unimplemented")
 }
 
 // VisitAssignExpr implements interfaces.Visitor.

@@ -229,7 +229,27 @@ func (p *Parser) statement() (interfaces.Statement, error) {
 		return p.printStatement()
 	}
 
+	if p.match(token.LEFT_BRACE) {
+		stmts, err := p.block()
+		return statements.NewBlockStatement(stmts), err
+	}
+
 	return p.expressionStatement()
+}
+
+func (p *Parser) block() ([]interfaces.Statement, error) {
+	var statements []interfaces.Statement
+
+	for !p.isAtEnd() && !p.check(token.RIGHT_BRACE) {
+		stmt, err := p.decalration()
+		if err != nil {
+			return statements, err
+		}
+		statements = append(statements, stmt)
+	}
+
+	_, err := p.consume(token.RIGHT_BRACE, "Expect '}' after block.", 65)
+	return statements, err
 }
 
 func (p *Parser) varDeclaration() (interfaces.Statement, error) {

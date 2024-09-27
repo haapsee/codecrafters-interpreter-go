@@ -22,4 +22,5 @@ type StatementVisitor interface {
 	VisitExpressionStatement(exprStmt Statement) (interface{}, error)
 	VisitPrintStatement(printStmt Statement) (interface{}, error)
 	VisitVarStatement(varStmt Statement) (interface{}, error)
+	VisitBlockStatement(blockStmt Statement) (interface{}, error)
 }
