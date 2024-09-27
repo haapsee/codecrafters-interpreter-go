@@ -6,21 +6,21 @@ import (
 )
 
 type Environment struct {
-	Enclosing interface{}
+	Enclosing *Environment
 	Values    map[string]interface{}
 }
 
-func (env Environment) Get(key token.Token) (interface{}, error) {
+func (env *Environment) Get(key token.Token) (interface{}, error) {
 	value, ok := env.Values[key.Lexeme]
 	if ok {
 		return value, nil
 	}
 
 	if env.Enclosing != nil {
-		return env.Enclosing.(Environment).Get(key)
+		return env.Enclosing.Get(key)
 	}
 
-	return nil, errors.NewRuntimeError(key, "Undefined variable '"+key.Lexeme+"'.")
+	return nil, errors.NewRuntimeError(key, "g Undefined variable '"+key.Lexeme+"'.")
 }
 
 func (env *Environment) Assign(name token.Token, value interface{}) error {
@@ -31,17 +31,17 @@ func (env *Environment) Assign(name token.Token, value interface{}) error {
 	}
 
 	if env.Enclosing != nil {
-		env.Enclosing.(*Environment).Assign(name, value)
+		return env.Enclosing.Assign(name, value)
 	}
 
-	return errors.NewRuntimeError(name, "Undefined variable '"+name.Lexeme+"'.")
+	return errors.NewRuntimeError(name, "a Undefined variable '"+name.Lexeme+"'.")
 }
 
 func (env *Environment) Define(key string, value interface{}) {
 	env.Values[key] = value
 }
 
-func NewEnvironment(enclosing interface{}) Environment {
+func NewEnvironment(enclosing *Environment) Environment {
 	return Environment{
 		Enclosing: enclosing,
 		Values:    make(map[string]interface{}),

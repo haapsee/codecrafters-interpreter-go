@@ -1,8 +1,36 @@
-var x;
-var y;
-var z;
 
-x = y = z = 3 + 5 * 4;
-print x;
-print y;
-print z;
+var world = "global world";
+var quz = "global quz";
+var foo = "global foo";
+{
+  var world = "outer world";
+  var quz = "outer quz";
+  {
+    var world = "inner world";
+    print world;
+    print quz;
+    print foo;
+  }
+  print world;
+  print quz;
+  print foo;
+}
+print world;
+print quz;
+print foo;
+
+
+
+{
+  var world = "outer world";
+  var quz = "outer quz";
+  {
+    world = "modified world";
+    var quz = "inner quz";
+    print world;
+    print quz;
+  }
+  print world;
+  print quz;
+}
+print quz;

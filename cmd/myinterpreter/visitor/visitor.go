@@ -25,7 +25,6 @@ type Interpreter struct {
 }
 
 func (interpreter *Interpreter) executeBlock(statements []interfaces.Statement, env environment.Environment) error {
-	prevEnv := interpreter.environment
 	interpreter.environment = env
 	var err error
 
@@ -36,14 +35,16 @@ func (interpreter *Interpreter) executeBlock(statements []interfaces.Statement, 
 		}
 	}
 
-	interpreter.environment = prevEnv
+	interpreter.environment = *env.Enclosing
 	return nil
 }
 
 // VisitBlockStatement implements interfaces.StatementVisitor.
 func (interpreter *Interpreter) VisitBlockStatement(blockStmt interfaces.Statement) (interface{}, error) {
 	blockStatement := blockStmt.(statements.BlockStatement)
-	err := interpreter.executeBlock(blockStatement.Statements, environment.NewEnvironment(interpreter.environment))
+	oldEnv := interpreter.environment
+	newEnv := environment.NewEnvironment(&oldEnv)
+	err := interpreter.executeBlock(blockStatement.Statements, newEnv)
 	return nil, err
 }
 
