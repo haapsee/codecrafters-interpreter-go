@@ -24,6 +24,32 @@ type Interpreter struct {
 	environment environment.Environment
 }
 
+func (interpreter Interpreter) VisitAssignExpr(ae interfaces.Expr) (interface{}, error) {
+	// fmt.Println(ae)
+	assignExpr := ae.(expr.AssignExpr)
+	value, err := interpreter.evaluate(assignExpr.Value)
+	if err != nil {
+		return nil, err
+	}
+	until := true
+	for until {
+		switch v := value.(type) {
+		case interfaces.Expr:
+			value, err = v.Accept(interpreter)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			until = false
+		}
+	}
+	err = interpreter.environment.Assign(assignExpr.Name, value)
+	if err != nil {
+		return nil, err
+	}
+	return assignExpr.Value, nil
+}
+
 func (interpreter Interpreter) VisitVarExpr(v interfaces.Expr) (interface{}, error) {
 	varExpression := v.(expr.VarExpr)
 	return interpreter.environment.Get(varExpression.Token)
@@ -199,21 +225,19 @@ func (interpreter *Interpreter) Stringify(obj interface{}) string {
 
 		return result
 	}
+
+	switch obj := obj.(type) {
+	case expr.LiteralExpr:
+		v := obj.Literal
+		return fmt.Sprintf("%v", v)
+	}
+
 	return fmt.Sprintf("%v", obj)
 }
 
 func (interpreter *Interpreter) execute(statement interfaces.Statement) error {
 	_, err := statement.Accept(interpreter)
 	return err
-}
-
-func (interpreter *Interpreter) InterpretOld(expression interfaces.Expr) error {
-	value, err := interpreter.evaluate(expression)
-	if err != nil {
-		return err
-	}
-	fmt.Println(interpreter.Stringify(value))
-	return nil
 }
 
 func (interpreter *Interpreter) Interpret(statements []interfaces.Statement) error {
@@ -249,6 +273,11 @@ func NewInterpreter() Interpreter {
  ****************
  ****************/
 type AstPrinter struct {
+}
+
+// VisitAssignExpr implements interfaces.Visitor.
+func (printer *AstPrinter) VisitAssignExpr(ae interfaces.Expr) (interface{}, error) {
+	panic("unimplemented")
 }
 
 // VisitVarStatement implements interfaces.StatementVisitor.

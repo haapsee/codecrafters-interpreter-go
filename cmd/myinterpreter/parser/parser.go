@@ -155,7 +155,31 @@ func (p *Parser) comparsion() (interfaces.Expr, error) {
 }
 
 func (p *Parser) Expression() (interfaces.Expr, error) {
-	return p.equality()
+	return p.assignment()
+}
+
+func (p *Parser) assignment() (interfaces.Expr, error) {
+	expression, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.match(token.EQUAL) {
+		equals := p.previous()
+		value, err := p.assignment()
+		if err != nil {
+			return nil, err
+		}
+
+		switch expression := expression.(type) {
+		case expr.VarExpr:
+			name := expression.Token
+			return expr.NewAssignExpr(name, value), nil
+		}
+
+		p.error(equals, "Invalid assignment target.")
+	}
+	return expression, nil
 }
 
 func (p *Parser) equality() (interfaces.Expr, error) {

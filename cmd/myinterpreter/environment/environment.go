@@ -14,7 +14,21 @@ func (env *Environment) Get(key token.Token) (interface{}, error) {
 	if !ok {
 		return nil, errors.NewRuntimeError(key, "Undefined variable '"+key.Lexeme+"'.")
 	}
+	if value == nil {
+		return nil, nil
+	}
+
 	return value, nil
+}
+
+func (env *Environment) Assign(name token.Token, value interface{}) error {
+	_, ok := env.Values[name.Lexeme]
+	if !ok {
+		return errors.NewRuntimeError(name, "Undefined variable '"+name.Lexeme+"'.")
+	}
+
+	env.Values[name.Lexeme] = value
+	return nil
 }
 
 func (env *Environment) Define(key string, value interface{}) {

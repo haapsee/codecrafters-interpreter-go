@@ -5,6 +5,22 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/cmd/myinterpreter/token"
 )
 
+type AssignExpr struct {
+	Name  token.Token
+	Value interfaces.Expr
+}
+
+func (ae AssignExpr) Accept(v interfaces.Visitor) (interface{}, error) {
+	return v.VisitAssignExpr(ae)
+}
+
+func NewAssignExpr(name token.Token, value interfaces.Expr) AssignExpr {
+	return AssignExpr{
+		Name:  name,
+		Value: value,
+	}
+}
+
 type VarExpr struct {
 	Token token.Token
 }

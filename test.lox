@@ -1,1 +1,8 @@
-print "♠";
+var x;
+var y;
+var z;
+
+x = y = z = 3 + 5 * 4;
+print x;
+print y;
+print z;

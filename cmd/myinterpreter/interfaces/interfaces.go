@@ -10,6 +10,7 @@ type Visitor interface {
 	VisitLiteralExpr(l Expr) (interface{}, error)
 	VisitUnaryExpr(u Expr) (interface{}, error)
 	VisitVarExpr(v Expr) (interface{}, error)
+	VisitAssignExpr(ae Expr) (interface{}, error)
 }
 
 type Statement interface {
